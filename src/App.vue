@@ -1,19 +1,24 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
+    <m-header />
+    <tab />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
+    <player />
   </div>
 </template>
 
-<style lang="stylus">
-#app
-  font-family Avenir, Helvetica, Arial, sans-serif
-  -webkit-font-smoothing antialiased
-  -moz-osx-font-smoothing grayscale
-  text-align center
-  color #2c3e50
-  margin-top 60px
-</style>
+
+<script>
+  import MHeader from 'components/m-header/index'
+  import Tab from './components/tab/index'
+  import Player from './components/player/index'
+  export default {
+    components: {
+      MHeader,
+      Tab,
+      Player
+    }
+  }
+</script>

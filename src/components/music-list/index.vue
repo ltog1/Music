@@ -9,8 +9,7 @@
           <span class="text">随机播放全部</span>
         </div>
       </div>
-
-<!--      <div class="filter"></div>-->
+      <div class="filter"></div>
     </div>
 
     <div class="bg-layer" ref="bgLayer"></div>
@@ -71,7 +70,7 @@
         this.$router.back();
       },
       randomClick() {
-
+        this.randomPlay(this.songs);
       },
       selectSong(item,index) {
         this.selectPlay({
@@ -103,7 +102,8 @@
         this.$refs.bgLayer.style.transform = `translate3d(0,${moveY}px,0)`;
       },
       ...mapActions([
-        'selectPlay'
+        'selectPlay',
+        'randomPlay'
       ])
     }
   }

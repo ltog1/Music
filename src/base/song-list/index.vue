@@ -29,7 +29,7 @@
     },
     methods: {
       getDesc (song) {
-        return `${song.singer}·${song.album}`
+        return `${song.singer}·${song.album}`;
       },
       selectSong(item,index) {
         this.$emit('selectSong',item,index);

@@ -1,5 +1,6 @@
 import { mapState, mapMutations, mapGetters } from "vuex";
 import { shuffle } from 'common/js/util'
+import cache from 'common/js/cache'
 
 export const playListMixin = {
   watch: {
@@ -37,7 +38,8 @@ export const playerMixin = {
     ...mapState([
       'mode',
       'playList',
-      'sequenceList'
+      'sequenceList',
+      'favoriteList'
     ]),
     ...mapGetters([
       'currentSong'
@@ -70,14 +72,42 @@ export const playerMixin = {
       this.setCurrentIndex(index);
       this.setPlayList(randomList);
     },
+    $_getFavoriteIcon(song) {
+      return this.isFavorite(song) ? 'icon-favorite' : 'icon-not-favorite';
+    },
+    $_toggleFavorite(song) {
+      if (this.isFavorite(song)) {
+        this.setFavoriteList(cache.deleteFavorite(song));
+      } else {
+        this.setFavoriteList(cache.saveFavorite(song));
+      }
+    },
+    isFavorite(song) {
+      let index = findIndex(this.favoriteList,song);
+      return index > -1;
+    },
     ...mapMutations([
       'setMode',
       'setPlayList',
       'setCurrentIndex',
+      'setFavoriteList'
     ])
   }
 }
 
 export const searchMixin = {
-
+  methods: {
+    $_addQuery(query) {
+      this.$refs.searchBox.setQuery(query);
+    },
+    $_deleteOne(key) {
+      this.setSearchHistory(cache.deleteSearch(key));
+    },
+    $_saveSearchHistory(query) {
+      this.setSearchHistory(cache.saveSearch(query));
+    },
+    ...mapMutations([
+      'setSearchHistory'
+    ])
+  }
 }

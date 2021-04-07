@@ -18,6 +18,7 @@ export function getHotKey() {
   });
 }
 
+// 获取搜索结果
 export function search(query,page,perpage,zhida) {
   const url = '/api/search';
 

@@ -45,7 +45,7 @@
             <div class="icon i-left"><i class="icon-prev" @click="prev"></i></div>
             <div class="icon i-center"><i :class="[ playing ? 'icon-pause': 'icon-play' ]" @click="togglePlaying"></i></div>
             <div class="icon i-right"><i class="icon-next" @click="next"></i></div>
-            <div class="icon i-right"><i class="icon icon-not-favorite"></i></div>
+            <div class="icon i-right" @click="$_toggleFavorite(currentSong)"><i class="icon" :class="$_getFavoriteIcon(currentSong)"></i></div>
           </div>
         </div>
       </div>
@@ -73,6 +73,7 @@
       </div>
     </transition>
 
+    <play-list ref="playlist"></play-list>
     <audio ref="audio" :src="currentSong.url" @timeupdate="timeupdate" @ended="ended" @canplay="canplay" @error="error"></audio>
   </div>
 </template>
@@ -81,16 +82,18 @@
   import ProgressBar from 'base/progress-bar'
   import ProgressCircle from 'base/progress-circle'
   import Scroll from 'base/scroll'
+  import PlayList from 'components/playlist'
   import { mapState, mapGetters, mapMutations } from 'vuex'
-  import { shuffle } from 'common/js/util'
   import { playerMixin } from 'common/js/mixin'
+  import cache from 'common/js/cache'
   import Lyric from 'lyric-parser'
   export default {
     name: "index",
     components: {
       ProgressBar,
       ProgressCircle,
-      Scroll
+      Scroll,
+      PlayList
     },
     mixins: [ playerMixin ],
     data() {
@@ -116,14 +119,15 @@
       ...mapGetters([
         'currentSong'
       ]),
-      // iconMode() {
-      //   let iconMode = this.mode === 0 ? 'icon-sequence' : this.mode === 1 ? 'icon-loop' : 'icon-random';
-      //   return iconMode;
-      // }
     },
     watch: {
       currentSong(newSong,oldSong) {
         if (newSong.id === oldSong.id) {
+          return ;
+        }
+
+        if (!this.playList.length) {
+          this.pause();
           return ;
         }
 
@@ -155,16 +159,18 @@
     },
     methods: {
       getLyric() {
-        this.currentSong.getLyric().then(lyric => {
-          this.currentLyric = new Lyric(lyric,this.handleLyric);
-          if (this.playing) {
-            this.currentLyric.play();
-          }
-        }).catch(() => {  // 获取不到歌词时,清理操作
-          this.currentLineNum = 0;
-          this.playingLyric = '';
-          this.currentLyric = null;
-        });
+        if (this.currentSong.id) {
+          this.currentSong.getLyric().then(lyric => {
+            this.currentLyric = new Lyric(lyric,this.handleLyric);
+            if (this.playing) {
+              this.currentLyric.play();
+            }
+          }).catch(() => {  // 获取不到歌词时,清理操作
+            this.currentLineNum = 0;
+            this.playingLyric = '';
+            this.currentLyric = null;
+          });
+        }
       },
       // 歌词变化时的函数
       handleLyric({ lineNum, txt }) {
@@ -295,7 +301,11 @@
         } else {
           this.pause();
 
-          this.syncWrapperTransform(this.$refs.cd,this.$refs.middleImage);
+          if (this.fullScreen) {
+            this.syncWrapperTransform(this.$refs.cd, this.$refs.middleImage);
+          } else {
+            this.syncWrapperTransform(this.$refs.miniImageWraper, this.$refs.miniImage);
+          }
         }
       },
       // 计算内层Image的transform旋转, 并同步到外层容器
@@ -305,33 +315,6 @@
         let newTransform = wrapperTransform === 'none' ? innerTransform : wrapperTransform.concat(' ', innerTransform);
         wrapper.style.transform = newTransform;
       },
-      // changeMode() {
-      //   let mode = this.mode === 0 ? 1 : this.mode === 1 ? 2 : 0;
-      //   this.setMode(mode);
-      //
-      //   if (mode === 0) { // 顺序
-      //     this.sequencePlay();
-      //   } else if (mode === 2) {
-      //     this.randomPlay();
-      //   }
-      // },
-      // sequencePlay() {
-      //   let index = this.findIndex(this.sequenceList,this.currentSong);
-      //   this.setCurrentIndex(index);
-      //   this.setPlayList(this.sequenceList);
-      // },
-      // randomPlay() {
-      //   let randomList = shuffle(this.playList.concat());
-      //   let index = this.findIndex(randomList,this.currentSong);
-      //
-      //   this.setCurrentIndex(index);
-      //   this.setPlayList(randomList);
-      // },
-      // findIndex(list,song) {
-      //   return list.findIndex(item => {
-      //     return item.id === song.id;
-      //   });
-      // },
       prev() {
         if (!this.songReady) {
           return ;
@@ -381,6 +364,7 @@
       // 已加载好,可以播放
       canplay() {
         this.songReady = true;
+        this.setPlayHistory(cache.savePlaySong(this.currentSong));
       },
       // 加载出错
       error() {
@@ -429,14 +413,15 @@
         this.setFullScreen(true);
       },
       showPlaylist() {
-
+        this.$refs.playlist.show();
       },
       ...mapMutations([
         'setFullScreen',
         'setPlaying',
         'setPlayList',
         'setCurrentIndex',
-        'setMode'
+        'setMode',
+        'setPlayHistory'
       ])
     }
   }
